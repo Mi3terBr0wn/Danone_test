@@ -61,13 +61,13 @@ if __name__ == "__main__":
     events_df = events_df.fillna(0)
     events_df.columns = [str(col) for col in events_df.columns]
     events_df.columns = ['.'.join(col.split('-')[::-1][1:]) for col in events_df.columns]
-    print(events_df)
 
     events_df = events_df.merge(events_customers_df, on=['index', 'index'], how='left')
     events_df.drop('index', axis=1, inplace=True)
 
     events_df = events_df.groupby('Customer ID').max().reset_index()
     events_df.set_index('Customer ID')
+    events_df = events_df[~events_df.isin([4]).any(axis=1)]
 
     for i in range(1, len(events_df.columns)):
         current_col = events_df.columns[i]
