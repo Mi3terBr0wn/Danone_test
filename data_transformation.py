@@ -65,26 +65,25 @@ if __name__ == "__main__":
     events_df = events_df.merge(events_customers_df, on=['index', 'index'], how='left')
     events_df.drop('index', axis=1, inplace=True)
 
-    events_df = events_df.groupby('Customer ID').max().reset_index()
+    events_df = events_df.groupby('Customer ID').sum().reset_index()
     events_df.set_index('Customer ID')
-    events_df = events_df[~events_df.isin([4]).any(axis=1)]
 
     for i in range(1, len(events_df.columns)):
         current_col = events_df.columns[i]
         prev_col = events_df.columns[i - 1]
-        mask = (events_df[prev_col].isin([1, 2])) & (events_df[current_col] != 3)
+        mask = (events_df[prev_col].isin([1, 2])) & (events_df[current_col] < 3)
         events_df.loc[mask, current_col] = 2
 
     for i in range(len(events_df.columns) - 2, 0, -1):
         current_col = events_df.columns[i]
         prev_col = events_df.columns[i + 1]
-        mask = (events_df[prev_col].isin([2, 3])) & (events_df[current_col] != 1)
+        mask = (events_df[prev_col].isin([2, 3, 4])) & (events_df[current_col] != 1)
         events_df.loc[mask, current_col] = 2
 
     overall_customer_churn_rate_df = pd.DataFrame(columns=events_df.columns[1:])
 
     for column in events_df.columns[1:]:
-        customer_count_beginning_of_month = events_df[column].isin([2, 3]).count()
+        customer_count_beginning_of_month = events_df[column].isin([2, 3, 4]).count()
         customer_count_end_of_month = events_df[column].isin([2]).sum()
         overall_customer_churn_rate_df.at[0, column] = (
             customer_churn_rate(customer_count_beginning_of_month.astype(float),
