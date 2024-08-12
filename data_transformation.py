@@ -12,7 +12,7 @@ def customer_churn_rate(customer_count_beginning_of_month_f, customer_count_end_
         return ((customer_count_beginning_of_month_f - customer_count_end_of_month_f) /
                 customer_count_beginning_of_month_f).astype(float)
     else:
-        return 1
+        return pd.NA
 
 
 def create_df_with_grouping(df, df_column):
@@ -26,7 +26,7 @@ def customer_churn_rate_df_with_grouping(by_group_customer_churn_rate_df, group_
     for col in events_df.columns:
         if col not in ['Customer ID', 'Country', 'Billing Plan']:
             customer_count_beginning_of_month_with_grouping = (
-                events_df[events_df[col].isin([2, 3])].groupby(group_column)[col].count())
+                events_df[events_df[col].isin([2, 3, 4])].groupby(group_column)[col].count())
             customer_count_end_of_month_with_grouping = events_df[events_df[col] == 2].groupby(group_column)[
                 col].count()
 
@@ -71,23 +71,24 @@ if __name__ == "__main__":
     for i in range(1, len(events_df.columns)):
         current_col = events_df.columns[i]
         prev_col = events_df.columns[i - 1]
-        mask = (events_df[prev_col].isin([1, 2])) & (events_df[current_col] < 3)
+        mask = (events_df[prev_col].isin([1, 2])) & (events_df[current_col] != 3)
         events_df.loc[mask, current_col] = 2
 
     for i in range(len(events_df.columns) - 2, 0, -1):
         current_col = events_df.columns[i]
         prev_col = events_df.columns[i + 1]
-        mask = (events_df[prev_col].isin([2, 3, 4])) & (events_df[current_col] != 1)
+        mask = (events_df[prev_col].isin([2, 3])) & (events_df[current_col] != 1)
         events_df.loc[mask, current_col] = 2
 
     overall_customer_churn_rate_df = pd.DataFrame(columns=events_df.columns[1:])
 
     for column in events_df.columns[1:]:
         customer_count_beginning_of_month = events_df[column].isin([2, 3, 4]).count()
-        customer_count_end_of_month = events_df[column].isin([2]).sum()
+        customer_count_end_of_month = events_df[column].eq(2).sum()
         overall_customer_churn_rate_df.at[0, column] = (
             customer_churn_rate(customer_count_beginning_of_month.astype(float),
                                 customer_count_end_of_month.astype(float)))
+
 
     customers_df = excel_reader.parse('01_Customers', index_col=0)
 
@@ -105,4 +106,3 @@ if __name__ == "__main__":
         overall_customer_churn_rate_df.to_excel(writer, sheet_name='Без группировок')
         by_country_customer_churn_rate_df.to_excel(writer, sheet_name='По странам')
         by_billing_plan_customer_churn_rate_df.to_excel(writer, sheet_name='По типу подписки')
-
