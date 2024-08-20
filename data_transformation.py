@@ -1,6 +1,4 @@
 import pandas as pd
-from datetime import datetime
-from openpyxl.styles import is_date_format
 
 
 def replace_value_in_column_by_condition_on_equality(df, df_column, old_condition, new_condition):
@@ -13,13 +11,6 @@ def customer_churn_rate(customer_count_beginning_of_month_f, customer_count_end_
                 customer_count_beginning_of_month_f).astype(float)
     else:
         return pd.NA
-
-
-def create_df_with_grouping(df, df_column):
-    unique_column_values = df[df_column].unique()
-    new_df = pd.DataFrame(columns=df.columns[1:-2])
-    new_df.insert(loc=len(new_df.columns), column=df_column, value=unique_column_values)
-    return new_df
 
 
 def customer_churn_rate_df_with_grouping(by_group_customer_churn_rate_df, group_column):
@@ -35,7 +26,7 @@ def customer_churn_rate_df_with_grouping(by_group_customer_churn_rate_df, group_
                                          customer_count_beginning_of_month_with_grouping.replace(0, pd.NA))
 
             by_group_customer_churn_rate_df[col] = by_group_customer_churn_rate_df[
-                group_column].map(group_customer_churn_rate).fillna(0)
+                group_column].map(group_customer_churn_rate).replace(0, pd.NA)
     return by_group_customer_churn_rate_df
 
 
@@ -88,7 +79,6 @@ if __name__ == "__main__":
         overall_customer_churn_rate_df.at[0, column] = (
             customer_churn_rate(customer_count_beginning_of_month.astype(float),
                                 customer_count_end_of_month.astype(float)))
-
 
     customers_df = excel_reader.parse('01_Customers', index_col=0)
 
